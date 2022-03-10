@@ -64,9 +64,10 @@ def read_instance(path) :
     return layout,circle
 
 instances = ["i01","i02","i03","i04","i05"]
-layout,circle = (read_instance(instances[2]))
+layout,circle = (read_instance(instances[0]))
 strat = markovDecision(layout,circle)
-strat[1] = np.array([4,4,4,4,4,4,4,4,4,4,4,4,4,4])
+print(strat)
+#strat[1] = np.array([4,4,4,4,4,4,4,4,4,4,4,4,4,4])
 #strat[1] = np.array([2,2,2,2,2,2,2,2,2,2,2,2,2,2])
 nb_turns = apply_strat(layout,circle,strat)
 print(nb_turns)
