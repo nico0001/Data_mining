@@ -1,35 +1,41 @@
 import numpy as np
 
 def markovDecision(layout,circle) :
-    expec = np.zeros(14)
+    expec = np.zeros(15)
     #dice = np.array([2,2,2,2,2,2,2,2,2,2,2,2,2,2]) # 2=security ,3=normal or 4=risky
-    dice = np.zeros(14)
+    dice = np.zeros(15)
     alpha=1
-    for i in range(len(layout)-2,-1,-1) :
+    for i in range(len(layout)-1,-1,-1) :
         expec[i],dice[i]=v_star(layout,circle,i,expec,dice,alpha)
 
-    return [expec,dice]
+    return [expec[:14],dice[:14]]
 
 def v_star(layout,circle,index,expec,dice, alpha):
     if index==len(layout)-1:
+        #print("Goal")
         return 0,0
-    if expec[index]!=0: 
+    elif expec[index]!=0: 
+        #print("Already computed:"+str(index))
         return expec[index], dice[index]
     
     else : 
+        #print(index)
         minV=99999
         chosenDice=1
         for d in range(1,4):
             allV=0
-            for i in range(len(layout)):
+            for i in range(index,len(layout)):
+                if(i==index):
+                     continue
+                v_k_prime,_=v_star(layout,circle,i,expec,dice,alpha)
                 allV+=(prob_from_cell_to_cell((index,layout[index]),(i,layout[i]),d+1, circle)
-                    *(1+alpha*v_star(layout,circle,i,expec,dice,alpha)))
-                if(minV>allV):
-                    minV=allV
-                    chosenDice=d
+                    *(1+alpha*v_k_prime))
+            if(minV>allV):
+                minV=allV
+                chosenDice=d
     return minV,chosenDice
 
-def prob_from_cell_to_cell(to_state,from_state,dice,circle):
+def prob_from_cell_to_cell(from_state,to_state,dice,circle):
     to_ind,to_cell = to_state
     from_ind,from_cell = from_state
 
@@ -82,4 +88,4 @@ def prob_from_cell_to_cell(to_state,from_state,dice,circle):
     else :
         prob = 0
 
-    return prob,-1
+    return prob
