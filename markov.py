@@ -5,34 +5,32 @@ def markovDecision(layout,circle) :
     #dice = np.array([2,2,2,2,2,2,2,2,2,2,2,2,2,2]) # 2=security ,3=normal or 4=risky
     dice = np.zeros(15)
     alpha=1
+    trans_matrix=transition_matrix(layout,circle)
     for i in range(len(layout)-1,-1,-1) :
-        expec[i],dice[i]=v_star(layout,circle,i,expec,dice,alpha)
+        expec[i],dice[i]=v_star(layout,circle,i,expec,dice,alpha,trans_matrix)
 
     return [expec[:14],dice[:14]]
 
-def v_star(layout,circle,index,expec,dice, alpha):
+def v_star(layout,circle,index,expec,dice,alpha,trans_matrix):
     if index==len(layout)-1:
         #print("Goal")
         return 0,0
     elif expec[index]!=0: 
         #print("Already computed:"+str(index))
         return expec[index], dice[index]
-    
-    else : 
         #print(index)
-        minV=99999
-        chosenDice=1
-        for d in range(1,4):
-            allV=0
-            for i in range(index,len(layout)):
-                if(i==index):
-                     continue
-                v_k_prime,_=v_star(layout,circle,i,expec,dice,alpha)
-                allV+=(prob_from_cell_to_cell((index,layout[index]),(i,layout[i]),d+1, circle)
-                    *(1+alpha*v_k_prime))
-            if(minV>allV):
-                minV=allV
-                chosenDice=d
+    minV=99999
+    chosenDice=1
+    for d in range(1,4):
+        allV=0
+        for i in range(index,len(layout)):
+            if(i==index):
+                continue
+            v_k_prime,_=v_star(layout,circle,i,expec,dice,alpha,trans_matrix)
+            allV+=1+(trans_matrix[index,i,d-1]*(v_k_prime))
+        if(minV>allV):
+            minV=allV
+            chosenDice=d
     return minV,chosenDice
 
 def prob_from_cell_to_cell(from_state,to_state,dice,circle):
@@ -41,7 +39,7 @@ def prob_from_cell_to_cell(from_state,to_state,dice,circle):
 
     # No prob from goal
     if from_ind==14:
-        return 0
+        return 1
     
     board_dist=0
     # End of slow lane
@@ -68,6 +66,7 @@ def prob_from_cell_to_cell(from_state,to_state,dice,circle):
 
     prob = 1
 
+
     # Type of dice 
     trigger_prob=(dice-2)/2
 
@@ -79,6 +78,10 @@ def prob_from_cell_to_cell(from_state,to_state,dice,circle):
             prob*= trigger_prob
             board_dist=0 # Guarantee to enter next condition
         
+    #End of game when no circle
+    if not circle and to_ind==14:
+        if board_dist<3:
+            prob = prob*(dice-board_dist)
     
     # in reach of dice
     if board_dist<dice and board_dist>=0:
@@ -89,3 +92,11 @@ def prob_from_cell_to_cell(from_state,to_state,dice,circle):
         prob = 0
 
     return prob
+
+def transition_matrix(layout,circle):
+    trans=np.zeros((len(layout), len(layout), 3))
+    for i in range(len(layout)):
+        for j in range(len(layout)):
+            for d in range(3):
+                trans[i,j,d]=prob_from_cell_to_cell((i,layout[i]),(j,layout[j]),d+2,circle)
+    return trans

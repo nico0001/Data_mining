@@ -6,10 +6,11 @@ def apply_strat(layout,circle,strat, epoch=99999) :
     curr_pos = 0
     finished = False
     fast_lane = False
+    print(circle)
 
     while nb_turns<epoch and not finished :
         # Throw the dice
-        curr_dice = dice[curr_pos]
+        curr_dice = dice[curr_pos]+1
         move = np.random.randint(curr_dice)
 
         # Fast lane ?
