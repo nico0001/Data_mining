@@ -6,7 +6,6 @@ def apply_strat(layout,circle,strat, epoch=99999) :
     curr_pos = 0
     finished = False
     fast_lane = False
-    print(circle)
 
     while nb_turns<epoch and not finished :
         # Throw the dice
@@ -57,6 +56,13 @@ def apply_strat(layout,circle,strat, epoch=99999) :
     #if not finished : return 0
     return nb_turns
 
+def gen_layout():
+    layout = [0] * 15
+    for i in range(1, 14):
+        if bool(np.random.randint(2)):
+            layout[i] = np.random.randint(1, 5)
+    return layout
+
 def read_instance(path) :
     with open("instances/"+path, 'r') as f:
             lines = f.readlines()
@@ -65,10 +71,15 @@ def read_instance(path) :
     return layout,circle
 
 instances = ["i01","i02","i03","i04","i05"]
-layout,circle = (read_instance(instances[4]))
+layout,circle = (read_instance(instances[2]))
+layout = gen_layout()
+print(layout, circle)
 strat = markovDecision(layout,circle)
 print(strat)
 #strat[1] = np.array([4,4,4,4,4,4,4,4,4,4,4,4,4,4])
 #strat[1] = np.array([2,2,2,2,2,2,2,2,2,2,2,2,2,2])
-nb_turns = apply_strat(layout,circle,strat)
-print(nb_turns)
+turn_lst = []
+for i in range(1000):
+    nb_turns = apply_strat(layout,circle,strat)
+    turn_lst.append(nb_turns)
+print(np.mean(turn_lst))

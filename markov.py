@@ -3,8 +3,8 @@ import numpy as np
 def markovDecision(layout,circle,tol=0.00000001,nb_epoch=9999) :
     expec = np.zeros(15)
     trans_matrix=transition_matrix(layout,circle)
-    for line in trans_matrix:
-        print(line)
+    '''for line in trans_matrix:
+        print(line)'''
     delta = v_star(layout,expec,trans_matrix)
     k=0
     while delta > tol and k<nb_epoch:
@@ -12,7 +12,7 @@ def markovDecision(layout,circle,tol=0.00000001,nb_epoch=9999) :
         k+=1
         #print("delta=",delta)
     dices = get_dices(layout,expec,trans_matrix)
-    print(k)
+    #print(k)
     return [expec[:14],dices[:14]]
 
 def v_star(layout,expec,trans_matrix):
@@ -70,7 +70,7 @@ def cost(cell,d):
 
 def prob_from_cell_to_cell(layout,from_state,to_state,dice,circle):
     
-    from_ind,from_cell = from_state,layout[from_state]
+    from_ind = from_state
     to_ind,to_cell = to_state,layout[to_state]
 
     # No prob from goal
