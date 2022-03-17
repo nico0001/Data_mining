@@ -70,16 +70,16 @@ def read_instance(path) :
     circle = bool(int(lines[1]))
     return layout,circle
 
-instances = ["i01","i02","i03","i04","i05"]
-layout,circle = (read_instance(instances[2]))
-layout = gen_layout()
-print(layout, circle)
+instances = ["i01","i02","i03","i04","i05","i06","i07"]
+layout,circle = (read_instance(instances[5]))
+#layout = gen_layout()
 strat = markovDecision(layout,circle)
+print(layout, circle)
 print(strat)
 #strat[1] = np.array([4,4,4,4,4,4,4,4,4,4,4,4,4,4])
 #strat[1] = np.array([2,2,2,2,2,2,2,2,2,2,2,2,2,2])
 turn_lst = []
-for i in range(1000):
+for i in range(10000):
     nb_turns = apply_strat(layout,circle,strat)
     turn_lst.append(nb_turns)
-print(np.mean(turn_lst))
+print("expected cost =",np.mean(turn_lst))

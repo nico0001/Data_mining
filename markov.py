@@ -1,10 +1,15 @@
 import numpy as np
 
-def markovDecision(layout,circle,tol=0.00000001,nb_epoch=9999) :
+def markovDecision(layout,circle,tol=0.00000000001,nb_epoch=9999) :
     expec = np.zeros(15)
     trans_matrix=transition_matrix(layout,circle)
-    '''for line in trans_matrix:
-        print(line)'''
+    for dice_matrix in trans_matrix:
+        for i,line in enumerate(dice_matrix):
+            if np.sum(line) !=1 and np.sum(line) !=0.9999999999999999:
+                print("#########################################",np.sum(line))
+            print(i,line)
+            if np.sum(line) !=1 and np.sum(line) !=0.9999999999999999:
+                print("#########################################")
     delta = v_star(layout,expec,trans_matrix)
     k=0
     while delta > tol and k<nb_epoch:
@@ -12,7 +17,7 @@ def markovDecision(layout,circle,tol=0.00000001,nb_epoch=9999) :
         k+=1
         #print("delta=",delta)
     dices = get_dices(layout,expec,trans_matrix)
-    #print(k)
+    print(k)
     return [expec[:14],dices[:14]]
 
 def v_star(layout,expec,trans_matrix):
@@ -22,11 +27,9 @@ def v_star(layout,expec,trans_matrix):
         v_list = np.zeros(3)
         for d in range(3) :
             a = trans_matrix[d,i,:]
-            sum = 0
             for j in np.where(a!=0)[0]:
                 p = trans_matrix[d,i,j]
-                sum+=p*(expec[j] + cost(layout[j],d))
-                v_list[d] = sum
+                v_list[d]+=p*(expec[j] + cost(i,j,layout[j],d))
         expec[i] = min(v_list)
         delta = max(delta, abs(temp - expec[i]))
     return delta
@@ -37,11 +40,9 @@ def get_dices(layout,expec,trans_matrix):
             v_list = np.zeros(3)
             for d in range(3):
                 a = trans_matrix[d,i,:]
-                sum = 0
                 for j in np.where(a!=0)[0]:
                     p = trans_matrix[d,i,j]
-                    sum+=p*(expec[j] + cost(layout[j],d))
-                v_list[d] = sum
+                    v_list[d]+=p*(expec[j] + cost(i,j,layout[j],d))
             min_index = 0
             min_val = np.min(v_list)
             for d in range(3):
@@ -58,11 +59,12 @@ def transition_matrix(layout,circle):
                 trans[d,i,j]=prob_from_cell_to_cell(layout,i,j,d+2,circle)
     return trans
 
-def cost(cell,d):
-    if cell==3:
-        return 1+d/2
-    if cell==4:
-        return 1-d/2
+def cost(from_ind,to_ind,cell,d):
+    if from_ind<=to_ind :
+        if cell==3:
+            return 1+d/2
+        if cell==4:
+            return 1-d/2
     return 1
 
 
@@ -107,12 +109,15 @@ def prob_from_cell_to_cell(layout,from_state,to_state,dice,circle):
     for dist in range(dice) :
         reachable_state = from_state+dist
         if circle:
-            if from_ind<10 and from_ind>7:
+            if from_ind<10 and from_ind>7 and reachable_state>11:
                 reachable_state -= 11
-            elif from_ind==13:
+            elif from_ind==13 and reachable_state>15:
                 reachable_state -= 15
-        if (reachable_state<14 and from_ind>9) or (reachable_state<10 and from_ind<10):
-            if from_ind==2:
+            
+        if(from_state==to_ind) and dist==3 and reachable_state==1:
+            reachable_state=-1
+        if ((reachable_state<14 and from_ind>9) or (reachable_state<10 and from_ind<10)) and reachable_state>=0:
+            if from_ind==2 and dist!=0:
                 prob+=0.5*add_prob_move(layout,reachable_state,to_ind,dice,board_dist-dist)
                 prob+=0.5*add_prob_move(layout,reachable_state+7,to_ind,dice,board_dist-dist)
             else:
@@ -136,8 +141,7 @@ def board_distance(layout,from_state,to_state,circle):
         # Circle fast lane
         if board_dist+15<4 and circle: board_dist+=15
         # Start of fast lane reversed
-        elif from_cell==2: board_dist+=7
-        else : board_dist+=99
+        else : board_dist+=7
     # Circle slow lane
     elif circle and board_dist+11<4 and from_ind<10 and from_ind>7 and to_ind<3:
             board_dist+=11
