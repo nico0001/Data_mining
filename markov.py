@@ -1,12 +1,13 @@
 import numpy as np
 
-def markovDecision(layout,circle,tol=0.00000000001,nb_epoch=9999) :
+def markovDecision(layout,circle,tol=10**-15,nb_epoch=9999) :
     expec = np.zeros(15)
     trans_matrix=transition_matrix(layout,circle)
     for dice_matrix in trans_matrix:
         for i,line in enumerate(dice_matrix):
             if np.sum(line) !=1 and np.sum(line) !=0.9999999999999999:
-                print("#########################################",np.sum(line))
+                print("#########################################")
+                print("the following line adds up to:",np.sum(line))
             print(i,line)
             if np.sum(line) !=1 and np.sum(line) !=0.9999999999999999:
                 print("#########################################")
@@ -29,27 +30,28 @@ def v_star(layout,expec,trans_matrix):
             a = trans_matrix[d,i,:]
             for j in np.where(a!=0)[0]:
                 p = trans_matrix[d,i,j]
-                v_list[d]+=p*(expec[j] + cost(i,j,layout[j],d))
+                v_list[d]+=p*(expec[j] + cost(layout,i,j,d,trans_matrix))
         expec[i] = min(v_list)
         delta = max(delta, abs(temp - expec[i]))
     return delta
 
 def get_dices(layout,expec,trans_matrix):
-        dices = np.zeros(len(layout))
-        for i in range(len(layout)):
-            v_list = np.zeros(3)
-            for d in range(3):
-                a = trans_matrix[d,i,:]
-                for j in np.where(a!=0)[0]:
-                    p = trans_matrix[d,i,j]
-                    v_list[d]+=p*(expec[j] + cost(i,j,layout[j],d))
-            min_index = 0
-            min_val = np.min(v_list)
-            for d in range(3):
-                if v_list[d] == min_val:
-                    min_index=d
-            dices[i] = min_index+1
-        return dices.astype(int)
+    dices = np.zeros(len(layout))
+    for i in range(len(layout)):
+        v_list = np.zeros(3)
+        for d in range(3):
+            a = trans_matrix[d,i,:]
+            for j in np.where(a!=0)[0]:
+                p = trans_matrix[d,i,j]
+                v_list[d]+=p*(expec[j] + cost(layout,i,j,d,trans_matrix))
+        min_index = 0
+        min_val = min(v_list)
+        for d in range(3):
+            if v_list[d] == min_val:
+                min_index=d
+        dices[i] = min_index+1
+        #print(v_list)
+    return dices.astype(int)
        
 def transition_matrix(layout,circle):
     trans=np.zeros((3,len(layout), len(layout)))
@@ -59,13 +61,29 @@ def transition_matrix(layout,circle):
                 trans[d,i,j]=prob_from_cell_to_cell(layout,i,j,d+2,circle)
     return trans
 
-def cost(from_ind,to_ind,cell,d):
+def cost(layout,from_ind,to_ind,d,trans_matrix):
+    cell = layout[to_ind]
+    c = 1
     if from_ind<=to_ind :
         if cell==3:
-            return 1+d/2
-        if cell==4:
-            return 1-d/2
-    return 1
+            c+=d/2
+        elif cell==4:
+            c-=d/2
+        # If cell(s) can move you to a jail or retry
+        # add a compensation given by the proportion of the total prob_from_cell_to_cell
+        if from_ind==to_ind and (cell==3 or cell==4) and d==2:
+            proportion = 1/4/trans_matrix[d,from_ind,to_ind]
+            c*= proportion
+            compensation = 0
+            if from_ind==2:
+                proportion/=2
+                if from_ind+10<13 and layout[from_ind+10]==2:
+                    compensation += proportion
+            if from_ind+3<14 and layout[from_ind+3]==2 and (from_ind+3<10 or from_ind>9):
+                compensation += proportion
+            
+            c = c +compensation
+    return c
 
 
 
@@ -81,7 +99,7 @@ def prob_from_cell_to_cell(layout,from_state,to_state,dice,circle):
             return 1
         return 0
     
-    board_dist = board_distance(layout,from_state,to_state,circle)
+    board_dist = board_distance(from_state,to_state,circle)
         
     prob = 1
 
@@ -125,9 +143,7 @@ def prob_from_cell_to_cell(layout,from_state,to_state,dice,circle):
     
     return prob
 
-def board_distance(layout,from_state,to_state,circle):
-    from_ind,from_cell = from_state,layout[from_state]
-    to_ind = to_state
+def board_distance(from_ind,to_ind,circle):
 
     board_dist = to_ind-from_ind
     # End of slow lane

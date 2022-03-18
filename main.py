@@ -8,15 +8,17 @@ def apply_strat(layout,circle,strat, epoch=99999) :
     fast_lane = False
 
     while nb_turns<epoch and not finished :
+        
         # Throw the dice
         curr_dice = dice[curr_pos]+1
         move = np.random.randint(curr_dice)
-
+        #print(curr_pos, move, curr_dice-1)
         # Fast lane ?
         if curr_pos==2 :
             fast_lane = bool(np.random.randint(2))
             if fast_lane and move!=0 :
                 curr_pos+=7
+        #print("fast_lane=",fast_lane)
         curr_pos+=move
         nb_turns+=1
 
@@ -36,7 +38,7 @@ def apply_strat(layout,circle,strat, epoch=99999) :
             prob = bool(np.random.randint(2))
         elif curr_dice==4 :
             prob = True
-
+        #print("prob =",prob)
         # Effect of cell
         if prob and not finished :
             cell = layout[curr_pos]
@@ -48,11 +50,12 @@ def apply_strat(layout,circle,strat, epoch=99999) :
                 if fast_lane and curr_pos <=9:
                     curr_pos-=7
                     fast_lane = False
-                elif curr_pos<0:curr_pos=0
+                if curr_pos<0:curr_pos=0
             elif cell==3:
                 nb_turns+=1
             elif cell==4:
                 nb_turns-=1
+        #print("turn=",nb_turns)
     #if not finished : return 0
     return nb_turns
 
@@ -72,7 +75,7 @@ def read_instance(path) :
 
 instances = ["i01","i02","i03","i04","i05","i06","i07"]
 layout,circle = (read_instance(instances[5]))
-#layout = gen_layout()
+layout = gen_layout()
 strat = markovDecision(layout,circle)
 print(layout, circle)
 print(strat)
@@ -82,4 +85,7 @@ turn_lst = []
 for i in range(10000):
     nb_turns = apply_strat(layout,circle,strat)
     turn_lst.append(nb_turns)
+print(np.std(turn_lst))
 print("expected cost =",np.mean(turn_lst))
+if abs(np.mean(turn_lst)-strat[0][0])>0.05:
+    1/0
