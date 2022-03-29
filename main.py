@@ -66,6 +66,15 @@ def gen_layout():
             layout[i] = np.random.randint(1, 5)
     return layout
 
+def shuffle_strat(strat):
+    return np.random.sample(strat,len(strat))
+
+def random_strat():
+    strat = []
+    for i in range(15):
+        strat.append(np.random.randint(1, 4))
+    return strat
+
 def read_instance(path) :
     with open("instances/"+path, 'r') as f:
             lines = f.readlines()
@@ -74,18 +83,19 @@ def read_instance(path) :
     return layout,circle
 
 instances = ["i01","i02","i03","i04","i05","i06","i07"]
-layout,circle = (read_instance(instances[5]))
-layout = gen_layout()
+layout,circle = (read_instance(instances[6]))
+#layout = gen_layout()
 strat = markovDecision(layout,circle)
+#shuffled_strat = shuffle_strat(strat)
 print(layout, circle)
 print(strat)
 #strat[1] = np.array([4,4,4,4,4,4,4,4,4,4,4,4,4,4])
 #strat[1] = np.array([2,2,2,2,2,2,2,2,2,2,2,2,2,2])
 turn_lst = []
-for i in range(10000):
+for i in range(100000):
     nb_turns = apply_strat(layout,circle,strat)
     turn_lst.append(nb_turns)
-print(np.std(turn_lst))
+print("std deviation =",np.std(turn_lst))
 print("expected cost =",np.mean(turn_lst))
 if abs(np.mean(turn_lst)-strat[0][0])>0.05:
     1/0

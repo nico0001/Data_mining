@@ -3,22 +3,12 @@ import numpy as np
 def markovDecision(layout,circle,tol=10**-15,nb_epoch=9999) :
     expec = np.zeros(15)
     trans_matrix=transition_matrix(layout,circle)
-    for dice_matrix in trans_matrix:
-        for i,line in enumerate(dice_matrix):
-            if np.sum(line) !=1 and np.sum(line) !=0.9999999999999999:
-                print("#########################################")
-                print("the following line adds up to:",np.sum(line))
-            print(i,line)
-            if np.sum(line) !=1 and np.sum(line) !=0.9999999999999999:
-                print("#########################################")
     delta = v_star(layout,expec,trans_matrix)
     k=0
     while delta > tol and k<nb_epoch:
         delta=v_star(layout,expec,trans_matrix)
         k+=1
-        #print("delta=",delta)
     dices = get_dices(layout,expec,trans_matrix)
-    print(k)
     return [expec[:14],dices[:14]]
 
 def v_star(layout,expec,trans_matrix):
@@ -50,7 +40,6 @@ def get_dices(layout,expec,trans_matrix):
             if v_list[d] == min_val:
                 min_index=d
         dices[i] = min_index+1
-        #print(v_list)
     return dices.astype(int)
        
 def transition_matrix(layout,circle):
@@ -69,8 +58,8 @@ def cost(layout,from_ind,to_ind,d,trans_matrix):
             c+=d/2
         elif cell==4:
             c-=d/2
-        # If cell(s) can move you to a jail or retry
-        # add a compensation given by the proportion of the total prob_from_cell_to_cell
+        # If cell(s) can move you back to a jail or retry
+        # adjust the cost by the proportion of the total prob_from_cell_to_cell
         if from_ind==to_ind and (cell==3 or cell==4) and d==2:
             proportion = 1/4/trans_matrix[d,from_ind,to_ind]
             c*= proportion
