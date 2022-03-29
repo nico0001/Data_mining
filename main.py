@@ -1,4 +1,5 @@
 from markov import *
+import matplotlib.pyplot as plt
 
 def apply_strat(layout,circle,strat, epoch=99999) :
     nb_turns=0
@@ -82,20 +83,65 @@ def read_instance(path) :
     circle = bool(int(lines[1]))
     return layout,circle
 
-instances = ["i01","i02","i03","i04","i05","i06","i07"]
-layout,circle = (read_instance(instances[6]))
+instances = ["i01","i02","i03","i04","i05", "i07"]
+expec=[]
+empirical=[]
+turns=[]
+diff=[]
 #layout = gen_layout()
+for inst in instances:
+    layout,circle = (read_instance(inst))
+    strat = markovDecision(layout,circle)
+    expec+=[strat[0][0]]
+    turn_lst = []
+    for i in range(10000):
+        nb_turns = apply_strat(layout,circle,strat)
+        turn_lst.append(nb_turns)
+    empirical+=[np.mean(turn_lst)]
+    diff+=[abs(np.mean(turn_lst)-strat[0][0])]
+    turns+=[turn_lst]
+        # finding the 1st quartile
+    q1 = np.quantile(turn_lst, 0.25)
+     
+    # finding the 3rd quartile
+    q3 = np.quantile(turn_lst, 0.75)
+    med = np.median(turn_lst)
+     
+    # finding the iqr region
+    iqr = q3-q1
+    
+    
+    # finding upper and lower whiskers
+    upper_bound = q3+(1.5*iqr)
+    lower_bound = q1-(1.5*iqr)
+    print(iqr, upper_bound, lower_bound)
+    outliers = np.where((turn_lst < lower_bound) | (turn_lst> upper_bound))
+    print(len(outliers[0])*100/10000)
+    
+
+layout=gen_layout()
 strat = markovDecision(layout,circle)
-#shuffled_strat = shuffle_strat(strat)
-print(layout, circle)
-print(strat)
-#strat[1] = np.array([4,4,4,4,4,4,4,4,4,4,4,4,4,4])
-#strat[1] = np.array([2,2,2,2,2,2,2,2,2,2,2,2,2,2])
+expec+=[strat[0][0]]
 turn_lst = []
 for i in range(100000):
     nb_turns = apply_strat(layout,circle,strat)
     turn_lst.append(nb_turns)
-print("std deviation =",np.std(turn_lst))
+empirical+=[np.mean(turn_lst)]
+diff+=[abs(np.mean(turn_lst)-strat[0][0])]
+turns+=[turn_lst]
+
+
+
+'''print(np.std(turn_lst))
 print("expected cost =",np.mean(turn_lst))
 if abs(np.mean(turn_lst)-strat[0][0])>0.05:
-    1/0
+    1/0'''
+plt.boxplot(turns, labels=("Normal","Restart","Penalty","Prison","Bonus","Handmade", "Random"))
+plt.plot(range(1,8), expec, label="Theoretical expected cost")
+plt.xticks(rotation=45)
+plt.xlabel("Type of layout")
+plt.ylabel("Number of turns")
+plt.legend()
+plt.title("Comparison of the theoritical expected cost \n and the empirical average cost on 10000 games")
+plt.show()
+plt.plot(range(7), diff)
