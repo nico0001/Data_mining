@@ -3,22 +3,12 @@ import numpy as np
 def markovDecision(layout,circle,tol=10**-15,nb_epoch=9999) :
     expec = np.zeros(15)
     trans_matrix=transition_matrix(layout,circle)
-    for dice_matrix in trans_matrix:
-        for i,line in enumerate(dice_matrix):
-            if np.sum(line) !=1 and np.sum(line) !=0.9999999999999999:
-                print("#########################################")
-                print("the following line adds up to:",np.sum(line))
-            print(i,line)
-            if np.sum(line) !=1 and np.sum(line) !=0.9999999999999999:
-                print("#########################################")
     delta = v_star(layout,expec,trans_matrix)
     k=0
     while delta > tol and k<nb_epoch:
         delta=v_star(layout,expec,trans_matrix)
         k+=1
-        #print("delta=",delta)
     dices = get_dices(layout,expec,trans_matrix)
-    print(k)
     return [expec[:14],dices[:14]]
 
 def v_star(layout,expec,trans_matrix):
@@ -50,7 +40,6 @@ def get_dices(layout,expec,trans_matrix):
             if v_list[d] == min_val:
                 min_index=d
         dices[i] = min_index+1
-        #print(v_list)
     return dices.astype(int)
        
 def transition_matrix(layout,circle):
