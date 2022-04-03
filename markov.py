@@ -1,6 +1,9 @@
 import numpy as np
 
-def markovDecision(layout,circle,tol=10**-15,nb_epoch=9999) :
+# Markov decision using value iteration process
+def markovDecision(layout,circle) :
+    tol=10**-15
+    nb_epoch=9999
     expec = np.zeros(15)
     trans_matrix=transition_matrix(layout,circle)
     delta = v_star(layout,expec,trans_matrix)
@@ -11,6 +14,7 @@ def markovDecision(layout,circle,tol=10**-15,nb_epoch=9999) :
     dices = get_dices(layout,expec,trans_matrix)
     return [expec[:14],dices[:14]]
 
+# Update the expected values and returns the worst accuracy improvement
 def v_star(layout,expec,trans_matrix):
     delta = 0
     for i in range(len(layout)-1) :
@@ -25,6 +29,7 @@ def v_star(layout,expec,trans_matrix):
         delta = max(delta, abs(temp - expec[i]))
     return delta
 
+# Returns the best dices
 def get_dices(layout,expec,trans_matrix):
     dices = np.zeros(len(layout))
     for i in range(len(layout)):
@@ -41,7 +46,8 @@ def get_dices(layout,expec,trans_matrix):
                 min_index=d
         dices[i] = min_index+1
     return dices.astype(int)
-       
+
+# Compute the transition matrix containing the probability relation between cells
 def transition_matrix(layout,circle):
     trans=np.zeros((3,len(layout), len(layout)))
     for d in range(3):
@@ -50,6 +56,7 @@ def transition_matrix(layout,circle):
                 trans[d,i,j]=prob_from_cell_to_cell(layout,i,j,d+2,circle)
     return trans
 
+# Returns the cost for two cells and an action
 def cost(layout,from_ind,to_ind,d,trans_matrix):
     cell = layout[to_ind]
     c = 1
@@ -76,7 +83,7 @@ def cost(layout,from_ind,to_ind,d,trans_matrix):
 
 
 
-
+# Returns the probability to reach a cell from another using a certain dice
 def prob_from_cell_to_cell(layout,from_state,to_state,dice,circle):
     
     from_ind = from_state
@@ -129,9 +136,9 @@ def prob_from_cell_to_cell(layout,from_state,to_state,dice,circle):
                 prob+=0.5*add_prob_move(layout,reachable_state+7,to_ind,dice,board_dist-dist)
             else:
                 prob+=add_prob_move(layout,reachable_state,to_ind,dice,board_dist-dist)
-    
     return prob
 
+# Computes the distance between two cells on the board
 def board_distance(from_ind,to_ind,circle):
 
     board_dist = to_ind-from_ind
@@ -155,6 +162,7 @@ def board_distance(from_ind,to_ind,circle):
         board_dist+=99
     return board_dist
 
+# Probality of being moved to a cell
 def add_prob_move(layout,reachable_state,to_ind,dice,board_dist):
     if (to_ind==0 and layout[reachable_state]==1) or (((board_dist==-3) or (to_ind==0 and reachable_state<3)) 
     and layout[reachable_state]==2):
