@@ -1,7 +1,8 @@
 from markov import *
 import matplotlib.pyplot as plt
+import random
 
-def apply_strat(layout,circle,strat, epoch=99999) :
+def apply_strat(layout,circle,strat, epoch=99999, random_choice=False) :
     nb_turns=0
     dice = strat[1]
     curr_pos = 0
@@ -11,7 +12,10 @@ def apply_strat(layout,circle,strat, epoch=99999) :
     while nb_turns<epoch and not finished :
         
         # Throw the dice
-        curr_dice = dice[curr_pos]+1
+        if not random_choice:
+            curr_dice = dice[curr_pos]+1
+        else:
+            curr_dice=random.choice([1,2,3])+1
         move = np.random.randint(curr_dice)
         #print(curr_pos, move, curr_dice-1)
         # Fast lane ?
@@ -68,12 +72,14 @@ def gen_layout():
     return layout
 
 def shuffle_strat(strat):
-    return np.random.sample(strat,len(strat))
+    newA=list(strat)
+    np.random.shuffle(newA)
+    return newA
 
 def random_strat():
     strat = []
     for i in range(15):
-        strat.append(np.random.randint(1, 4))
+        strat.append(random.choice([1,2,3]))
     return strat
 
 def read_instance(path) :
@@ -84,6 +90,72 @@ def read_instance(path) :
     return layout,circle
 
 instances = ["i01","i02","i03","i04","i05", "i07"]
+titles=["Comparison of the mean number of turns \n for different strategy on the normal layout","Comparison of the mean number of turns \n for different strategy on the restart layout"
+        ,"Comparison of the mean number of turns \n for different strategy on the penalty layout","Comparison of the mean number of turns \n for different strategy on prison layout",
+        "Comparison of the mean number of turns \n for different strategy on the bonus layout","Comparison of the mean number of turns \n for different strategy on the handmade layout",
+        "Comparison of the mean number of turns \n for different strategy on a random layout"]
+sts=["Markov", "Ones", "Twos", "Threes", "Random","Random\n choice"]
+
+'''Strats circle
+layout=(gen_layout(),True)
+mean_turns=[]
+tries=10000
+strats=[markovDecision(layout[0],layout[1]),(np.zeros(14),np.ones(14)),(np.zeros(14),[2]*14),(np.zeros(14),[3]*14), (np.zeros(14),random_strat())]
+strats+=[(np.zeros(14),np.zeros(14))]
+for s in range(len(strats)):
+    #print(str(s)+": "+str(strats[s]))
+    turns=0
+    for i in range(tries):
+        if(s==5):
+            turns+=apply_strat(layout[0], layout[1], strats[s], random_choice=True)
+        else:
+            turns+=apply_strat(layout[0], layout[1], strats[s])
+    mean_turns+=[turns/tries]
+plt.bar([x for _,x in sorted(zip(mean_turns,sts))],[x for x,_ in sorted(zip(mean_turns,sts))])
+plt.title(titles[6]+" with circle")
+plt.xticks(rotation=45)
+plt.xlabel("Strategy")
+plt.ylabel("Mean number of turns")
+print(mean_turns[:3]+mean_turns[4:])
+plt.ylim((0,min([max(mean_turns[:3]+mean_turns[4:])+1,100])))
+plt.show()'''
+    
+'''Strats plots
+layouts=[]
+Circle=True
+for inst in instances:
+   layouts+=[(read_instance(inst)[0],Circle)]
+layouts+=[(gen_layout(),Circle)]
+tries=10000
+for layout in layouts:
+    print(layout)
+    mean_turns=[]
+    strats=[markovDecision(layout[0],layout[1]),(np.zeros(14),np.ones(14)),(np.zeros(14),[2]*14),(np.zeros(14),[3]*14), (np.zeros(14),random_strat())]
+    strats+=[(np.zeros(14),np.zeros(14))]
+    for s in range(len(strats)):
+        #print(str(s)+": "+str(strats[s]))
+        if (layouts.index(layout)==1 or layouts.index(layout)==2) and s==3:
+            print("Not computed")
+            mean_turns+=[1000]
+            continue
+        turns=0
+        for i in range(tries):
+            if(s==5):
+                turns+=apply_strat(layout[0], layout[1], strats[s], random_choice=True)
+            else:
+                turns+=apply_strat(layout[0], layout[1], strats[s])
+        mean_turns+=[turns/tries]
+    plt.bar([x for _,x in sorted(zip(mean_turns,sts))],[x for x,_ in sorted(zip(mean_turns,sts))])
+    plt.title(titles[layouts.index(layout)])
+    plt.xticks(rotation=45)
+    plt.xlabel("Strategy")
+    plt.ylabel("Mean number of turns")
+    print(mean_turns[:3]+mean_turns[4:])
+    plt.ylim((0,min([max(mean_turns[:3]+mean_turns[4:])+1,100])))
+    plt.show()'''
+    
+    
+''' Boxplot accuracy'''
 expec=[]
 empirical=[]
 turns=[]
@@ -91,11 +163,11 @@ diff=[]
 #layout = gen_layout()
 for inst in instances:
     layout,circle = (read_instance(inst))
-    strat = markovDecision(layout,circle)
+    strat = markovDecision(layout,True)
     expec+=[strat[0][0]]
     turn_lst = []
     for i in range(10000):
-        nb_turns = apply_strat(layout,circle,strat)
+        nb_turns = apply_strat(layout,True,strat)
         turn_lst.append(nb_turns)
     empirical+=[np.mean(turn_lst)]
     diff+=[abs(np.mean(turn_lst)-strat[0][0])]
@@ -129,19 +201,12 @@ for i in range(100000):
 empirical+=[np.mean(turn_lst)]
 diff+=[abs(np.mean(turn_lst)-strat[0][0])]
 turns+=[turn_lst]
-
-
-
-'''print(np.std(turn_lst))
-print("expected cost =",np.mean(turn_lst))
-if abs(np.mean(turn_lst)-strat[0][0])>0.05:
-    1/0'''
 plt.boxplot(turns, labels=("Normal","Restart","Penalty","Prison","Bonus","Handmade", "Random"))
 plt.plot(range(1,8), expec, label="Theoretical expected cost")
 plt.xticks(rotation=45)
 plt.xlabel("Type of layout")
 plt.ylabel("Number of turns")
 plt.legend()
-plt.title("Comparison of the theoritical expected cost \n and the empirical average cost on 10000 games")
+plt.title("Comparison of the theoritical expected cost \n and the empirical average cost on 10000 games with circle")
 plt.show()
 plt.plot(range(7), diff)
