@@ -65,16 +65,24 @@ class Recognizer:
       points = _translateToOrigin(points)
       
       
-      bestDistance = float("infinity")
-      bestTemplate = None
+      scores = {}
       for template in self.templates:
          distance = _distanceAtBestAngle(points, template, -angleRange, +angleRange, anglePrecision)
+         if template.name in scores:
+            scores[template.name].append(distance)
+         else:
+            scores[template.name] = [distance]
+         
+      bestDistance = float("infinity")
+      bestTemplate = None
+      for key in scores :
+         distance = np.mean(scores[key])
          if distance < bestDistance:
             bestDistance = distance
-            bestTemplate = template
+            bestTemplate = key
 
       score = 1.0 - (bestDistance / halfDiagonal)
-      return (bestTemplate.name, score)
+      return (bestTemplate, score)
 
    def addTemplate(self, name, points):
       """Add a new template, and assign it a name. Multiple templates can be given the same name, for more accurate matching. Returns an integer representing the number of templates matching this name."""
