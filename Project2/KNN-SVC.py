@@ -83,6 +83,7 @@ def dist_matrix(x):
     return dist_m
 
 #Reading all the files and puting themn in a dataframe
+directory = 'Sketch-Data-master\SketchData\SketchData\Domain01'
 df = pd.DataFrame(columns=['number', 'id', 'time_sequence'])
 for filename in range(1,1001):
     f = os.path.join(directory, str(filename)+".txt")
@@ -96,35 +97,39 @@ for filename in range(1,1001):
 #np.savetxt("dist_matrix2.csv",X,delimiter=",")
 
 X=np.genfromtxt("dist_matrix2.csv",delimiter=",")
+#For SVM, we have to compute the symmetry matrix
+X_sym=np.zeros((X.shape[0],X.shape[1]), dtype=float)
 for i in range(len(X)):
     for j in range(len(X[i])):
         if(X[i,j]==np.inf):
             X[i,j]=99999999
+        X_sym[i,j]=1.0/(1.0+X[i,j])
 y = np.array(df["number"].array,dtype=float)
-
 
 '''KNearest Neighbors cross-validation'''
 n_neighbors = 5
 
-# we only take the first two features. We could avoid this ugly
-# slicing by using a two-dim dataset
-
 scores_KNN=[]
 scores_SVC=[]
-conf_matrix_KNN=np.zeros((10,10))
+conf_matrix=np.zeros((10,10))
 conf_matrix_SVC=np.zeros((10,10))
 for test_ind, train_ind in cross_validation_split():
+    #KNN score
     x_train, y_train = X[train_ind], y[train_ind]
     x_train=x_train[:,train_ind]
     x_test, y_test = X[test_ind], y[test_ind]
     x_test=x_test[:,train_ind]
-
     clf = neighbors.KNeighborsClassifier(n_neighbors, metric="precomputed")
     clf.fit(x_train, y_train)
     scores_KNN+=[clf.score(x_test,y_test)]
-    conf_matrix_KNN+=confusion_matrix(y_test,clf.predict(x_test))
+    conf_matrix+=confusion_matrix(y_test,clf.predict(x_test))
 
-    sv=SVC(kernel='precomputed',C=1000, gamma='auto')
+    #SVM score
+    x_train, y_train = X_sym[train_ind], y[train_ind]
+    x_train=x_train[:,train_ind]
+    x_test, y_test = X_sym[test_ind], y[test_ind]
+    x_test=x_test[:,train_ind]
+    sv=SVC(kernel='precomputed')
     sv.fit(x_train,y_train)
     scores_SVC+=[sv.score(x_test,y_test)]
     conf_matrix_SVC+=confusion_matrix(y_test,sv.predict(x_test))
@@ -133,12 +138,12 @@ print("Average accuracy KNN = "+str(np.mean(scores_KNN)))
 print("Standard Deviation KNN = "+str(np.std(scores_KNN)))
 print("Median KNN = "+str(np.median(scores_KNN)))
 print(scores_KNN)
-disp=ConfusionMatrixDisplay(conf_matrix_KNN)
+disp=ConfusionMatrixDisplay(conf_matrix, display_labels=range(1,11))
 disp.plot()
-
+print()
 print("Average accuracy SVC = "+str(np.mean(scores_SVC)))
 print("Standard Deviation SVC = "+str(np.std(scores_SVC)))
-print("Median KNN = "+str(np.median(scores_SVC)))
+print("Median SVC = "+str(np.median(scores_SVC)))
 print(scores_SVC)
-disp=ConfusionMatrixDisplay(conf_matrix_SVC)
+disp=ConfusionMatrixDisplay(conf_matrix_SVC,display_labels=range(1,11))
 disp.plot()
