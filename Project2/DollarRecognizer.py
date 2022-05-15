@@ -38,6 +38,32 @@
 
 import math
 import numpy as np
+import pandas as pd
+import os
+
+from sklearn.metrics import ConfusionMatrixDisplay
+
+
+def read(filepath):
+    '''Function that reads a file at the given filepath and returns the informations
+    in a dataframe  '''
+    try:
+        df = pd.DataFrame(columns=['number', 'id', 'time_sequence'])
+        lines = [line.strip() for line in open(filepath,'r')]
+        number = int(lines[1].split(" ")[3])
+        id = int(lines[2].split(" ")[3])
+        matrix = []
+        for i in range(5,len(lines)):
+            line = lines[i].split(",")
+            line = np.array(line).astype(np.float64)
+            matrix.append([*line[:3]])
+        
+        df.loc[0] = [number, id, matrix]
+        return df
+    except IOError as e:
+        print("Unable to read dataset file!\n")
+
+directory = 'Sketch-Data-master\SketchData\SketchData\Domain01'
 
 # Contants. Tweak at your peril. :)
 
@@ -296,3 +322,38 @@ def _distance(p1, p2):
    dy = p2.y - p1.y
    dz = p2.z - p1.z
    return math.sqrt(dx * dx + dy * dy + dz * dz)
+
+#Reading all the files and puting themn in a dataframe
+directory = 'Sketch-Data-master\SketchData\SketchData\Domain01'
+df = pd.DataFrame(columns=['number', 'id', 'time_sequence'])
+for filename in range(1,1001):
+    f = os.path.join(directory, str(filename)+".txt")
+    # checking if it is a file
+    if os.path.isfile(f):
+        df=pd.concat([df,read(f)], ignore_index=True)
+
+'''Dollar One Recognizer cross-validation'''
+
+scores = np.zeros((10))
+conf_matrix=np.zeros((10,10))
+for u in range(10):
+    recognizer = Recognizer()
+    for user in range(10):
+        if user!=u:
+            for num in range(10):
+                for i in range(10):
+                    recognizer.addTemplate(str(num+1), df['time_sequence'][user*100+num*10+i])
+    
+    for i in range(10):
+        for j in range(10):
+            result = recognizer.recognize(df['time_sequence'][u*100+i*10+j])
+            conf_matrix[int(result[0]) - 1, i] += 1
+            if result[0]==str(i+1):
+                scores[u]+=1
+    scores[u] /= 100
+                
+print("Average accuracy 3D $1 = "+str(np.mean(scores)))
+print("Standard Deviation 3D $1 = "+str(np.std(scores)))
+print("Median 3D $1 = "+str(np.median(scores)))
+disp=ConfusionMatrixDisplay(conf_matrix)
+disp.plot()
