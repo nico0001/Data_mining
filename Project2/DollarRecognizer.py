@@ -334,7 +334,7 @@ for filename in range(1,1001):
 
 '''Dollar One Recognizer cross-validation'''
 
-scores = np.zeros((10))
+scores_dollar = np.zeros((10))
 conf_matrix=np.zeros((10,10))
 for u in range(10):
     recognizer = Recognizer()
@@ -349,11 +349,12 @@ for u in range(10):
             result = recognizer.recognize(df['time_sequence'][u*100+i*10+j])
             conf_matrix[int(result[0]) - 1, i] += 1
             if result[0]==str(i+1):
-                scores[u]+=1
-    scores[u] /= 100
+                scores_dollar[u]+=1
+    scores_dollar[u] /= 100
                 
-print("Average accuracy 3D $1 = "+str(np.mean(scores)))
-print("Standard Deviation 3D $1 = "+str(np.std(scores)))
-print("Median 3D $1 = "+str(np.median(scores)))
+print("Average accuracy 3D $1 = "+str(np.mean(scores_dollar)))
+print("Standard Deviation 3D $1 = "+str(np.std(scores_dollar)))
+print("Median 3D $1 = "+str(np.median(scores_dollar)))
+print(scores_dollar)
 disp=ConfusionMatrixDisplay(conf_matrix)
 disp.plot()
